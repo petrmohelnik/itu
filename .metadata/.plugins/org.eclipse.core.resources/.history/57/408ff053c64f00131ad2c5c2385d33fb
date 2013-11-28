@@ -1,0 +1,151 @@
+package com.example.todo;
+
+import java.util.*;
+import java.io.*;
+
+public class Tree {
+	protected ArrayList<Node> children;
+	protected Node activeNode;
+	protected int lastID;
+	
+	public Tree()
+	{
+		children = new ArrayList<Node>(0);
+		activeNode = null;
+		lastID = 0;
+	}
+	
+	public void setActiveNode(Node node)
+	{
+		activeNode = node;
+	}
+	
+	public void addChild()
+	{
+		Node child = new Node(activeNode, ++lastID);
+		if(activeNode != null)
+		{
+			activeNode.addChild(child);
+		}
+		else
+		{
+			children.add(child);
+		}
+	}
+	
+	public ArrayList<Node> getActiveChildren()
+	{
+		return activeNode.getChildren();
+	}
+	
+	public ArrayList<Node> getRootChildren()
+	{
+		return children;
+	}
+	
+	public Node findById(int id, Node node, boolean root)
+	{
+		ArrayList<Node> list = new ArrayList<Node>(0);
+		getAllNodes(list, null, false);
+		Iterator<Node> itr = list.iterator();
+		
+		while(itr.hasNext())
+		{
+			Node returnNode = itr.next();
+			if(returnNode.getID() == id)
+				return returnNode;				
+		}
+		return null;
+	}
+	
+	public void getAllNodes(ArrayList<Node> list, Node node, boolean root)
+	{		
+		Iterator<Node> itr;
+		if(root)
+		{
+			itr = children.iterator();
+		}
+		else
+		{
+			list.add(node);
+			itr = node.getChildren().iterator();
+		}
+		
+		while(itr.hasNext())
+		{
+			getAllNodes(list, itr.next(), false);	
+		}
+		return;
+	}
+	
+	public boolean save()
+	{
+		File f = new File("save");
+		ArrayList<Node> list = new ArrayList<Node>(0);
+		getAllNodes(list, null, false);
+		Iterator<Node> itr = list.iterator();
+		
+		if(f.exists())
+		{
+			try
+			{
+				f.delete();
+				f.createNewFile();
+			} catch(Exception e) {
+				return false;
+			}
+		}
+		
+		try
+		{
+			BufferedWriter bw = new BufferedWriter(new FileWriter(f, true));
+			
+			while(itr.hasNext())
+			{
+				Node node = itr.next();
+				int parentID;
+				if(node.getParent() == null)
+				{
+					parentID = -1;				
+				}
+				else
+				{
+					parentID = node.getParent().getID();
+				}
+				bw.write(node.getID() + "." + parentID + "." + node.getDescription() + "\n");
+			}
+			
+			bw.close();			
+		} catch(Exception e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean load()
+	{
+		File f = new File("save");
+		
+		if(!f.canRead())
+			return false;
+		
+		try
+		{
+			BufferedReader br = new BufferedReader(new FileReader(f));
+			
+			while(true)
+			{
+				String line = br.readLine();
+				if(line == null)
+					break;
+			}
+			
+			br.close();			
+		} catch(Exception e) {
+			return false;
+		}
+		
+		return true;
+	}
+
+}

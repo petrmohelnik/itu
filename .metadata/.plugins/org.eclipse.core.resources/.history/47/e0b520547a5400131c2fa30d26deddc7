@@ -1,0 +1,223 @@
+package com.example.todo;
+
+import java.util.*;
+import java.io.*;
+
+public class Tree {
+	protected ArrayList<Node> children; //kontejner podukolu
+	protected Node activeNode; //aktivni pukol
+	protected int lastID; //podledne pouzite id
+	
+	public Tree()
+	{
+		children = new ArrayList<Node>(0);
+		activeNode = null;
+		lastID = 0;
+	}
+	
+	/**
+	 * nastavi aktivni ukol
+	 * @param node ukol
+	 */
+	public void setActiveNode(Node node)
+	{
+		activeNode = node;
+	}
+	
+	/**
+	 * prida potomka aktivnimu ukolu
+	 */
+	public void addChild()
+	{
+		Node child = new Node(activeNode, ++lastID);
+		if(activeNode != null)
+		{
+			activeNode.addChild(child);
+		}
+		else
+		{
+			children.add(child);
+		}
+	}
+	
+	/**
+	 * vrati potomky aktivniho prvku
+	 * @return
+	 */
+	public ArrayList<Node> getActiveChildren()
+	{
+		if(activeNode != null)
+		{
+			return activeNode.getChildren();
+		}
+		else
+		{
+			return children;
+		}
+	}
+	
+	/**
+	 * vyhleda ve stromu prvek s danym id
+	 * @param id
+	 * @return
+	 */
+	public Node findById(int id)
+	{
+		ArrayList<Node> list = new ArrayList<Node>(0);
+		getAllNodes(list, null, false);
+		Iterator<Node> itr = list.iterator();
+		
+		while(itr.hasNext())
+		{
+			Node returnNode = itr.next();
+			if(returnNode.getID() == id)
+				return returnNode;				
+		}
+		return null;
+	}
+	
+	/**
+	 * naplni kontejner vsemi prvky ze stromu zadanym korenem
+	 * @param list kontejner
+	 * @param node koren
+	 * @param all zda se prohedava cely strom
+	 */
+	public void getAllNodes(ArrayList<Node> list, Node node, boolean all)
+	{		
+		Iterator<Node> itr;
+		if(all)
+		{
+			itr = children.iterator();
+		}
+		else
+		{
+			list.add(node);
+			itr = node.getChildren().iterator();
+		}
+		
+		while(itr.hasNext())
+		{
+			getAllNodes(list, itr.next(), false);	
+		}
+		return;
+	}
+	
+	/**
+	 * Ulozi strom do souboru
+	 * @param fileName nazev souboru
+	 * @return
+	 */
+	public boolean save(String fileName)
+	{
+		File f = new File(fileName);
+		ArrayList<Node> list = new ArrayList<Node>(0);
+		getAllNodes(list, null, false);
+		Iterator<Node> itr = list.iterator();
+		
+		if(f.exists())
+		{
+			try
+			{
+				f.delete();
+				f.createNewFile();
+			} catch(Exception e) {
+				return false;
+			}
+		}
+		
+		try
+		{
+			BufferedWriter bw = new BufferedWriter(new FileWriter(f, true));
+			
+			while(itr.hasNext())
+			{
+				Node node = itr.next();
+				int parentID;
+				if(node.getParent() == null)
+				{
+					parentID = -1;				
+				}
+				else
+				{
+					parentID = node.getParent().getID();
+				}
+				bw.write(node.getID() + "#:" + parentID + "#:" + node.getDescription() + "\n");
+			}
+			
+			bw.close();			
+		} catch(Exception e) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Nacte strom ze souboru 
+	 * @param fileName nazev souboru
+	 * @return
+	 */
+	public boolean load(String fileName)
+	{
+		File f = new File(fileName);
+		
+		if(!f.canRead())
+			return false;
+		
+		try
+		{
+			BufferedReader br = new BufferedReader(new FileReader(f));
+			
+			while(true)
+			{
+				String line = br.readLine();
+				if(line == null)
+					break;
+				String[] splits = line.split("#:", 3);
+				
+				Node newNode;
+				if(Integer.parseInt(splits[1]) == -1)
+				{
+					newNode = new Node(null, Integer.parseInt(splits[0]));
+					children.add(newNode);					
+				}
+				else
+				{
+					Node parent = findById(Integer.parseInt(splits[1]));
+					newNode = new Node(parent, Integer.parseInt(splits[0]));
+					parent.addChild(newNode);
+				}
+				
+				newNode.setDescription(splits[2]);				
+			}
+			
+			br.close();			
+		} catch(Exception e) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	void sort(ArrayList<Node> list)
+	{
+		int endIndex = list.size() - 1;
+		boolean end;
+		
+		do
+		{
+			end = false;
+			for(int i = 0; i < endIndex; i++)
+			{
+				if(list.get(i).getID() > list.get(i+1).getID())
+				{
+					Node node = list.get(i);
+					list.set(i, list.get(i+1));
+					list.set(i+1, node);
+					end = true;
+				}
+			}
+			endIndex--;
+		} while(end && endIndex > 0);
+	}
+
+}

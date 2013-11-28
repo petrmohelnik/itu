@@ -1,4 +1,0 @@
-INDEX VERSION 1.126+C:\Users\Peta\Desktop\android\adt-bundle-windows-x86_64-20131030\workspace\.metadata\.plugins\org.eclipse.jdt.core
-2713068411.index
-1040080653.index
-1082899563.index
